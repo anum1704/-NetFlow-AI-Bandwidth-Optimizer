@@ -1,0 +1,94 @@
+# NetFlow AI — HOW TO RUN
+# Intelligent Bandwidth Allocation using Reinforcement Learning
+
+========================================================
+STEP 1 — Install Python dependencies
+========================================================
+
+Open a terminal / PowerShell inside the `backend` folder:
+
+    cd backend
+    python -m pip install -r requirements.txt
+
+
+========================================================
+STEP 2 — Start the backend server
+========================================================
+
+    python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+You should see:
+    INFO: Uvicorn running on http://0.0.0.0:8000
+
+Leave this terminal running.
+
+
+========================================================
+STEP 3 — Open the frontend
+========================================================
+
+Open the `frontend` folder and double-click:
+
+    dashboard.html
+
+Or open it in any browser. The sidebar connects all pages.
+
+
+========================================================
+STEP 4 — Recommended workflow
+========================================================
+
+1. Dashboard → Upload a .pcap file  (or use synthetic data)
+2. Model Training → Click "Start Training"  (pick RandomForest)
+3. Model Training → Click "Train RL Agent"  (300 episodes)
+4. Model Evaluation → Click "Run Evaluation"
+5. Bandwidth Predictions → Click "Start Live Stream"
+
+You can also test manual allocation on the Predictions page.
+
+
+========================================================
+API Docs (Swagger UI)
+========================================================
+
+    http://localhost:8000/docs
+
+
+========================================================
+Project Files
+========================================================
+
+backend/
+  main.py              ← FastAPI entry point (run this)
+  requirements.txt     ← Python dependencies
+  routes/
+    ingestion.py       ← PCAP upload & parsing
+    training.py        ← ML classifier training
+    evaluation.py      ← Metrics, confusion matrix, feature importance
+    prediction.py      ← Real-time predictions + SSE stream
+    rl_agent.py        ← Q-Learning RL bandwidth allocation agent
+  utils/
+    state.py           ← Shared in-memory state
+    pcap_parser.py     ← PCAP → flow features
+
+frontend/
+  dashboard.html           ← Main dashboard (start here)
+  DataIngestion.html       ← Upload PCAP files
+  Model_training.html      ← Train ML + RL agents
+  ModelEvaluation.html     ← Metrics, confusion matrix, feature importance
+  BandwidthPrediction.html ← Live stream + manual RL allocation
+
+
+========================================================
+RL Agent Design (Q-Learning, no deep learning)
+========================================================
+
+STATE  = traffic_class × utilisation_bucket
+         e.g. "Peak Spike|HIGH"  (12 possible states)
+
+ACTIONS = increase | maintain | decrease | throttle
+
+REWARD  = +10 correct action, -15 amplifying anomaly,
+          -12 throttling legitimate burst, etc.
+
+Q-UPDATE = Q(s,a) ← Q(s,a) + α[r + γ max Q(s',a') - Q(s,a)]
